@@ -39,4 +39,5 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material:material-icons-extended")
     debugImplementation("androidx.compose.ui:ui-tooling")
+implementation("org.osmdroid:osmdroid-android:6.1.20")
 }
