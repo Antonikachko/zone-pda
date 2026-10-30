@@ -39,17 +39,15 @@ private fun loadNotes(
     prefs: android.content.SharedPreferences
 ): List<String> {
     return try {
-        val array = org.json.JSONArray(
-            prefs.getString("notes", "[]")
-        )
-
+        val array = JSONArray(prefs.getString("notes", "[]"))
         List(array.length()) { index ->
             array.getString(index)
         }
     } catch (e: Exception) {
-        emptyList<String>()
+        emptyList()
     }
 }
+
 private val bg = Color(0xFF080E09)
 private val panel = Color(0xFF101C13)
 private val green = Color(0xFF9BFFA3)
@@ -60,7 +58,9 @@ private val line = Color(0xFF29442E)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { PdaApp() }
+        setContent {
+            PdaApp()
+        }
     }
 }
 
@@ -69,20 +69,30 @@ fun PdaApp() {
     val context = LocalContext.current
 
     val prefs = remember {
-    context.getSharedPreferences("zone_pda_data", Context.MODE_PRIVATE
-  )
-}
+        context.getSharedPreferences(
+            "zone_pda_data",
+            Context.MODE_PRIVATE
+        )
+    }
 
-var page by remember { mutableStateOf("КПК") }
-var note by remember { mutableStateOf("") }
+    var page by remember { mutableStateOf("КПК") }
+    var note by remember { mutableStateOf("") }
 
-var notes by remember {
-    mutableStateOf(loadNotes(prefs))
-}
+    var notes by remember {
+        mutableStateOf(loadNotes(prefs))
+    }
 
-var currentTime by remember { mutableStateOf("--:--:--") }
-var currentDate by remember { mutableStateOf("--.--.----") }
-var battery by remember { mutableIntStateOf(-1) }
+    var currentTime by remember {
+        mutableStateOf("--:--:--")
+    }
+
+    var currentDate by remember {
+        mutableStateOf("--.--.----")
+    }
+
+    var battery by remember {
+        mutableIntStateOf(-1)
+    }
 
     // Збереження журналу
     LaunchedEffect(notes) {
@@ -98,12 +108,15 @@ var battery by remember { mutableIntStateOf(-1) }
     LaunchedEffect(Unit) {
         while (true) {
             val now = Date()
+
             currentTime = SimpleDateFormat(
-                "HH:mm:ss", Locale.getDefault()
+                "HH:mm",
+                Locale.getDefault()
             ).format(now)
 
             currentDate = SimpleDateFormat(
-                "dd.MM.yyyy", Locale.getDefault()
+                "dd.MM.yy",
+                Locale.getDefault()
             ).format(now)
 
             delay(1000)
@@ -112,7 +125,9 @@ var battery by remember { mutableIntStateOf(-1) }
 
     // Реальний заряд батареї
     DisposableEffect(context) {
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        val filter = IntentFilter(
+            Intent.ACTION_BATTERY_CHANGED
+        )
 
         fun updateBattery(intent: Intent?) {
             if (intent != null) {
@@ -136,6 +151,7 @@ var battery by remember { mutableIntStateOf(-1) }
 
         @Suppress("DEPRECATION")
         val initial = context.registerReceiver(receiver, filter)
+
         updateBattery(initial)
 
         onDispose {
@@ -145,85 +161,196 @@ var battery by remember { mutableIntStateOf(-1) }
 
     MaterialTheme {
         Column(
-            Modifier.fillMaxSize()
+            Modifier
+                .fillMaxSize()
                 .background(bg)
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(12.dp)
+                .then(
+                    if (page == "КАРТА") Modifier
+                    else Modifier.padding(12.dp)
+                )
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
+
+            // ЗВИЧАЙНА ВЕРХНЯ ПАНЕЛЬ
+            if (page != "КАРТА") {
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "ZONE PDA",
+                            color = green,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace
+                        )
+
+                        Text(
+                            "PERSONAL FIELD TERMINAL",
+                            color = muted,
+                            fontSize = 9.sp,
+                            letterSpacing = 2.sp
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            "● SYSTEM ONLINE",
+                            color = green,
+                            fontSize = 10.sp
+                        )
+
+                        Text(
+                            "BUILD 0.3",
+                            color = muted,
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = line)
+                Spacer(Modifier.height(10.dp))
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            currentTime,
+                            color = green,
+                            fontSize = 23.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+
+                        Text(
+                            currentDate,
+                            color = muted,
+                            fontSize = 10.sp
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            "ЗОНА: НЕВІДОМО",
+                            color = amber,
+                            fontSize = 10.sp
+                        )
+
+                        Text(
+                            "GPS: STANDBY",
+                            color = muted,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            panel,
+                            RoundedCornerShape(4.dp)
+                        )
+                        .border(
+                            1.dp,
+                            line,
+                            RoundedCornerShape(4.dp)
+                        )
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        "ZONE PDA",
+                        "ЗВ'ЯЗОК: ONLINE",
                         color = green,
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace
+                        fontSize = 9.sp
                     )
+
                     Text(
-                        "PERSONAL FIELD TERMINAL",
-                        color = muted,
-                        fontSize = 9.sp,
-                        letterSpacing = 2.sp
+                        "СКАНЕР: READY",
+                        color = green,
+                        fontSize = 9.sp
+                    )
+
+                    Text(
+                        "АКУМ: ${if (battery >= 0) "$battery%" else "--"}",
+                        color = if (battery in 0..20) amber else green,
+                        fontSize = 9.sp
                     )
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("● SYSTEM ONLINE", color = green, fontSize = 10.sp)
-                    Text("BUILD 0.3", color = muted, fontSize = 9.sp)
-                }
-            }
+                Spacer(Modifier.height(12.dp))
 
-            Spacer(Modifier.height(12.dp))
-            HorizontalDivider(color = line)
-            Spacer(Modifier.height(10.dp))
+            } else {
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
+                // КОМПАКТНА ПАНЕЛЬ КАРТИ
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(34.dp)
+                        .background(panel)
+                        .border(
+                            1.dp,
+                            line,
+                            RoundedCornerShape(2.dp)
+                        )
+                        .padding(horizontal = 7.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         currentTime,
                         color = green,
-                        fontSize = 23.sp,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
-                    Text(currentDate, color = muted, fontSize = 10.sp)
-                }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("ЗОНА: НЕВІДОМО", color = amber, fontSize = 10.sp)
-                    Text("GPS: STANDBY", color = muted, fontSize = 10.sp)
+                    Text(
+                        currentDate,
+                        color = green,
+                        fontSize = 9.sp
+                    )
+
+                    Text(
+                        "GPS: STBY",
+                        color = muted,
+                        fontSize = 9.sp
+                    )
+
+                    Text(
+                        "NET: ONLINE",
+                        color = green,
+                        fontSize = 9.sp
+                    )
+
+                    Text(
+                        "АКБ: ${if (battery >= 0) "$battery%" else "--"}",
+                        color = if (battery in 0..20) amber else green,
+                        fontSize = 9.sp
+                    )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                Modifier.fillMaxWidth()
-                    .background(panel, RoundedCornerShape(4.dp))
-                    .border(1.dp, line, RoundedCornerShape(4.dp))
-                    .padding(10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+            // ОСНОВНИЙ ВМІСТ
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                Text("ЗВ'ЯЗОК: ONLINE", color = green, fontSize = 9.sp)
-                Text("СКАНЕР: READY", color = green, fontSize = 9.sp)
-                Text(
-                    "АКУМ: ${if (battery >= 0) "$battery%" else "--"}",
-                    color = if (battery in 0..20) amber else green,
-                    fontSize = 9.sp
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (page) {
+
                     "КПК" -> HomePage(
                         currentTime,
                         currentDate,
@@ -242,6 +369,7 @@ var battery by remember { mutableIntStateOf(-1) }
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
+
                         Text(
                             "PERSONAL NOTES DATABASE",
                             color = muted,
@@ -253,9 +381,17 @@ var battery by remember { mutableIntStateOf(-1) }
                         BasicTextField(
                             value = note,
                             onValueChange = { note = it },
-                            modifier = Modifier.fillMaxWidth()
-                                .background(panel, RoundedCornerShape(4.dp))
-                                .border(1.dp, line, RoundedCornerShape(4.dp))
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    panel,
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    line,
+                                    RoundedCornerShape(4.dp)
+                                )
                                 .padding(12.dp),
                             textStyle = androidx.compose.ui.text.TextStyle(
                                 color = green,
@@ -303,7 +439,8 @@ var battery by remember { mutableIntStateOf(-1) }
                                 Text(
                                     "› $entry",
                                     color = green,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
                                         .padding(vertical = 4.dp)
                                         .background(panel)
                                         .padding(9.dp)
@@ -324,21 +461,31 @@ var battery by remember { mutableIntStateOf(-1) }
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            // НИЖНЄ МЕНЮ
+            Spacer(Modifier.height(8.dp))
             HorizontalDivider(color = line)
             Spacer(Modifier.height(8.dp))
 
             val tabs = listOf(
-                "КПК", "КАРТА", "СКАНЕР",
-                "ЖУРНАЛ", "ЗАВДАННЯ", "ІНВЕНТАР"
+                "КПК",
+                "КАРТА",
+                "СКАНЕР",
+                "ЖУРНАЛ",
+                "ЗАВДАННЯ",
+                "ІНВЕНТАР"
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
                 tabs.chunked(3).forEach { tabRow ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
                         tabRow.forEach { tab ->
                             Box(
-                                Modifier.weight(1f)
+                                Modifier
+                                    .weight(1f)
                                     .background(
                                         if (page == tab) Color(0xFF1B3520)
                                         else panel,
@@ -349,7 +496,9 @@ var battery by remember { mutableIntStateOf(-1) }
                                         if (page == tab) green else line,
                                         RoundedCornerShape(3.dp)
                                     )
-                                    .clickable { page = tab }
+                                    .clickable {
+                                        page = tab
+                                    }
                                     .padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -365,14 +514,19 @@ var battery by remember { mutableIntStateOf(-1) }
                 }
             }
 
-            Spacer(Modifier.height(5.dp))
+            // ПІДПИС ПРИХОВАНИЙ НА КАРТІ
+            if (page != "КАРТА") {
+                Spacer(Modifier.height(5.dp))
 
-            Text(
-                "ZONE PDA // FIELD EQUIPMENT DIVISION",
-                color = muted,
-                fontSize = 8.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+                Text(
+                    "ZONE PDA // FIELD EQUIPMENT DIVISION",
+                    color = muted,
+                    fontSize = 8.sp,
+                    modifier = Modifier.align(
+                        Alignment.CenterHorizontally
+                    )
+                )
+            }
         }
     }
 }
@@ -384,7 +538,9 @@ fun HomePage(
     noteCount: Int,
     battery: Int
 ) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         item {
             InfoPage(
                 "СТАН СИСТЕМИ",
@@ -427,7 +583,8 @@ fun HomePage(
                 "WARNING: UNKNOWN TERRITORY",
                 color = amber,
                 fontSize = 10.sp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .background(panel)
                     .padding(12.dp)
             )
@@ -438,7 +595,8 @@ fun HomePage(
 @Composable
 fun InfoPage(title: String, message: String) {
     Column(
-        Modifier.fillMaxWidth()
+        Modifier
+            .fillMaxWidth()
             .background(panel, RoundedCornerShape(4.dp))
             .border(1.dp, line, RoundedCornerShape(4.dp))
             .padding(13.dp)
@@ -482,7 +640,11 @@ fun RadarPage() {
 
         Spacer(Modifier.height(12.dp))
 
-        Canvas(Modifier.fillMaxWidth().weight(1f)) {
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
             val r = minOf(size.width, size.height) * 0.43f
             val c = Offset(size.width / 2, size.height / 2)
 
@@ -531,7 +693,11 @@ fun RadarPage() {
             )
         }
 
-        Text("СКАНУВАННЯ: ДЕМО", color = amber, fontSize = 11.sp)
+        Text(
+            "СКАНУВАННЯ: ДЕМО",
+            color = amber,
+            fontSize = 11.sp
+        )
 
         Text(
             "ВИЯВЛЕНІ МІТКИ НЕ Є РЕАЛЬНИМИ ДАНИМИ",
