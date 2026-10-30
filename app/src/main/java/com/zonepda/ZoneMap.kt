@@ -4,9 +4,7 @@ package com.zonepda
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,7 +47,6 @@ fun ZoneMapPage() {
             setTileSource(satelliteSource)
             setMultiTouchControls(true)
             setBuiltInZoomControls(false)
-
             controller.setZoom(7.0)
             controller.setCenter(GeoPoint(58.7, 25.5))
         }
@@ -60,6 +57,7 @@ fun ZoneMapPage() {
             if (satellite) satelliteSource
             else TileSourceFactory.MAPNIK
         )
+        mapView.invalidate()
     }
 
     DisposableEffect(mapView) {
@@ -79,33 +77,35 @@ fun ZoneMapPage() {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Button(
                 onClick = { satellite = true },
+                modifier = Modifier.weight(1f).height(38.dp),
+                contentPadding = PaddingValues(2.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (satellite)
                         Color(0xFF29442E)
                     else Color(0xFF101C13)
                 ),
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.weight(1f)
+                shape = RoundedCornerShape(3.dp)
             ) {
-                Text("СУПУТНИК", fontSize = 10.sp)
+                Text("СУПУТНИК", fontSize = 9.sp)
             }
 
             Button(
                 onClick = { satellite = false },
+                modifier = Modifier.weight(1f).height(38.dp),
+                contentPadding = PaddingValues(2.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (!satellite)
                         Color(0xFF29442E)
                     else Color(0xFF101C13)
                 ),
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.weight(1f)
+                shape = RoundedCornerShape(3.dp)
             ) {
-                Text("ЗВИЧАЙНА", fontSize = 10.sp)
+                Text("ЗВИЧАЙНА", fontSize = 9.sp)
             }
         }
 
@@ -113,17 +113,18 @@ fun ZoneMapPage() {
             factory = { mapView },
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(1f),
+            update = { view ->
+                view.invalidate()
+            }
         )
 
         Text(
-            if (satellite)
-                "IMAGERY: ESRI"
-            else
-                "MAP DATA: OPENSTREETMAP",
+            if (satellite) "IMAGERY: ESRI"
+            else "MAP DATA: OPENSTREETMAP",
             color = Color(0xFF9BFFA3),
             fontSize = 9.sp,
-            modifier = Modifier.padding(top = 5.dp)
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
