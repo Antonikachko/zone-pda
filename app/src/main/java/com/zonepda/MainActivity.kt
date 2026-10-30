@@ -35,6 +35,21 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private fun loadNotes(
+    prefs: android.content.SharedPreferences
+): List<String> {
+    return try {
+        val array = org.json.JSONArray(
+            prefs.getString("notes", "[]")
+        )
+
+        List(array.length()) { index ->
+            array.getString(index)
+        }
+    } catch (e: Exception) {
+        emptyList<String>()
+    }
+}
 private val bg = Color(0xFF080E09)
 private val panel = Color(0xFF101C13)
 private val green = Color(0xFF9BFFA3)
@@ -58,7 +73,9 @@ fun PdaApp() {
     }
 
     var page by remember { mutableStateOf("КПК") }
-    var note by remember { mutableStateOf("") }
+    var notes by remember {
+    mutableStateOf(loadNotes(prefs))
+}
 
     var notes by remember {
         mutableStateOf(
