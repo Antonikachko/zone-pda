@@ -69,36 +69,20 @@ fun PdaApp() {
     val context = LocalContext.current
 
     val prefs = remember {
-        context.getSharedPreferences("zone_pda_data", Context.MODE_PRIVATE)
-    }
+    context.getSharedPreferences("zone_pda_data", Context.MODE_PRIVATE
+  )
+}
 
-    var page by remember { mutableStateOf("КПК") }
-    var notes by remember {
+var page by remember { mutableStateOf("КПК") }
+var note by remember { mutableStateOf("") }
+
+var notes by remember {
     mutableStateOf(loadNotes(prefs))
 }
 
-    var notes by remember {
-        mutableStateOf(
-            try {
-                var notes by remember {
-    mutableStateOf<List<String>>(
-        try {
-            val array = JSONArray(prefs.getString("notes", "[]"))
-            List(array.length()) { index ->
-                array.getString(index)
-            }
-        } catch (_: Exception) {
-            emptyList<String>()
-        }
-    )
-}
-            }
-        )
-    }
-
-    var currentTime by remember { mutableStateOf("--:--:--") }
-    var currentDate by remember { mutableStateOf("--.--.----") }
-    var battery by remember { mutableIntStateOf(-1) }
+var currentTime by remember { mutableStateOf("--:--:--") }
+var currentDate by remember { mutableStateOf("--.--.----") }
+var battery by remember { mutableIntStateOf(-1) }
 
     // Збереження журналу
     LaunchedEffect(notes) {
