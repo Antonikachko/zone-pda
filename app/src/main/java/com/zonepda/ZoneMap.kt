@@ -142,11 +142,11 @@ fun ZoneMapPage(
                     )
                     icon = createStalkerIcon(context)
                     title = "МОЄ МІСЦЕ"
-                    position = position
+                    setPosition(position)
                 }
                 mapView.overlays.add(userMarker)
             } else {
-                userMarker?.position = position
+                userMarker?.setPosition(position)
             }
 
             mapView.invalidate()
