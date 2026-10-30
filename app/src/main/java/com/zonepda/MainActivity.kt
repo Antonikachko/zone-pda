@@ -231,10 +231,7 @@ var battery by remember { mutableIntStateOf(-1) }
                         battery
                     )
 
-                    "КАРТА" -> InfoPage(
-                        "КАРТА ЗОНИ",
-                        "Модуль GPS не активований.\n\nОчікування підключення навігації."
-                    )
+                    "КАРТА" -> ZoneMapPage()
 
                     "СКАНЕР" -> RadarPage()
 
