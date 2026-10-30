@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +25,9 @@ private val satelliteSource = object : OnlineTileSourceBase(
     19,
     256,
     ".jpg",
-    arrayOf("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/")
+    arrayOf(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+    )
 ) {
     override fun getTileURLString(tileIndex: Long): String {
         return baseUrl +
@@ -37,6 +40,7 @@ private val satelliteSource = object : OnlineTileSourceBase(
 @Composable
 fun ZoneMapPage() {
     var satellite by remember { mutableStateOf(true) }
+
     val context = androidx.compose.ui.platform.LocalContext.current
 
     val mapView = remember {
@@ -47,19 +51,21 @@ fun ZoneMapPage() {
             setTileSource(satelliteSource)
             setMultiTouchControls(true)
             setBuiltInZoomControls(false)
+
             controller.setZoom(7.0)
             controller.setCenter(GeoPoint(58.7, 25.5))
         }
     }
 
+    // Перемикання шарів без перестворення карти
     LaunchedEffect(satellite) {
         mapView.setTileSource(
             if (satellite) satelliteSource
             else TileSourceFactory.MAPNIK
         )
-        mapView.invalidate()
     }
 
+    // Життєвий цикл карти
     DisposableEffect(mapView) {
         mapView.onResume()
 
@@ -74,6 +80,8 @@ fun ZoneMapPage() {
             .fillMaxSize()
             .background(Color(0xFF080E09))
     ) {
+
+        // ПАНЕЛЬ ШАРІВ
         Row(
             Modifier
                 .fillMaxWidth()
@@ -82,7 +90,9 @@ fun ZoneMapPage() {
         ) {
             Button(
                 onClick = { satellite = true },
-                modifier = Modifier.weight(1f).height(38.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
                 contentPadding = PaddingValues(2.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (satellite)
@@ -96,7 +106,9 @@ fun ZoneMapPage() {
 
             Button(
                 onClick = { satellite = false },
-                modifier = Modifier.weight(1f).height(38.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp),
                 contentPadding = PaddingValues(2.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (!satellite)
@@ -109,19 +121,30 @@ fun ZoneMapPage() {
             }
         }
 
-        AndroidView(
-            factory = { mapView },
-            modifier = Modifier
+        // ФІКСОВАНА ОБЛАСТЬ КАРТИ
+        Box(
+            Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            update = { view ->
-                view.invalidate()
-            }
-        )
+                .weight(1f)
+                .clipToBounds()
+                .background(Color(0xFF080E09))
+        ) {
+            AndroidView(
+                factory = {
+                    mapView
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clipToBounds()
+            )
+        }
 
+        // ПІДПИС ДЖЕРЕЛА КАРТИ
         Text(
-            if (satellite) "IMAGERY: ESRI"
-            else "MAP DATA: OPENSTREETMAP",
+            if (satellite)
+                "IMAGERY: ESRI"
+            else
+                "MAP DATA: OPENSTREETMAP",
             color = Color(0xFF9BFFA3),
             fontSize = 9.sp,
             modifier = Modifier.padding(top = 4.dp)
