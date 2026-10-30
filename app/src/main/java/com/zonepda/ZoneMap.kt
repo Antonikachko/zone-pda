@@ -43,60 +43,128 @@ private val satelliteSource = object : OnlineTileSourceBase(
     }
 }
 
-private fun createStalkerIcon(context: android.content.Context): BitmapDrawable {
-    val bitmap = Bitmap.createBitmap(96, 120, Bitmap.Config.ARGB_8888)
+
+private fun createStalkerIcon(
+    context: android.content.Context
+): BitmapDrawable {
+    val bitmap = Bitmap.createBitmap(
+        128, 150, Bitmap.Config.ARGB_8888
+    )
     val canvas = Canvas(bitmap)
 
-    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = AndroidColor.rgb(155, 255, 163)
-        style = Paint.Style.STROKE
-        strokeWidth = 4f
-    }
+    val green = AndroidColor.rgb(155, 255, 163)
+    val dark = AndroidColor.rgb(8, 20, 11)
+    val shade = AndroidColor.rgb(38, 75, 43)
 
     val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = AndroidColor.rgb(8, 20, 11)
+        color = dark
         style = Paint.Style.FILL
     }
 
+    val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = green
+        style = Paint.Style.STROKE
+        strokeWidth = 4f
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    val detail = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = green
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    // Зовнішня форма краплі
     val drop = Path().apply {
-        moveTo(48f, 5f)
-        cubicTo(35f, 25f, 10f, 52f, 10f, 73f)
-        cubicTo(10f, 96f, 27f, 113f, 48f, 113f)
-        cubicTo(69f, 113f, 86f, 96f, 86f, 73f)
-        cubicTo(86f, 52f, 61f, 25f, 48f, 5f)
+        moveTo(64f, 5f)
+        cubicTo(47f, 29f, 12f, 66f, 12f, 94f)
+        cubicTo(12f, 122f, 34f, 143f, 64f, 143f)
+        cubicTo(94f, 143f, 116f, 122f, 116f, 94f)
+        cubicTo(116f, 66f, 81f, 29f, 64f, 5f)
         close()
     }
 
     canvas.drawPath(drop, fill)
-    canvas.drawPath(drop, border)
+    canvas.drawPath(drop, outline)
 
-    val figure = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = AndroidColor.rgb(155, 255, 163)
-        strokeWidth = 5f
-        strokeCap = Paint.Cap.ROUND
-        style = Paint.Style.STROKE
+    // Внутрішній контур
+    canvas.drawCircle(64f, 88f, 43f, outline)
+
+    // Рюкзак
+    canvas.drawRoundRect(
+        32f, 76f, 48f, 111f,
+        5f, 5f, fill
+    )
+    canvas.drawRoundRect(
+        32f, 76f, 48f, 111f,
+        5f, 5f, outline
+    )
+    canvas.drawLine(36f, 84f, 44f, 84f, detail)
+    canvas.drawLine(36f, 98f, 44f, 98f, detail)
+
+    // Капюшон
+    val hood = Path().apply {
+        moveTo(43f, 64f)
+        cubicTo(43f, 38f, 51f, 27f, 64f, 27f)
+        cubicTo(79f, 27f, 87f, 40f, 85f, 64f)
+        lineTo(78f, 78f)
+        lineTo(49f, 78f)
+        close()
     }
 
-    // Голова
-    canvas.drawCircle(43f, 48f, 7f, figure)
+    canvas.drawPath(hood, fill)
+    canvas.drawPath(hood, outline)
 
-    // Тулуб
-    canvas.drawLine(43f, 57f, 43f, 79f, figure)
+    // Маска протигаза
+    canvas.drawRoundRect(
+        49f, 49f, 79f, 76f,
+        8f, 8f, fill
+    )
+    canvas.drawRoundRect(
+        49f, 49f, 79f, 76f,
+        8f, 8f, outline
+    )
+
+    // Окуляри
+    canvas.drawCircle(57f, 59f, 5f, detail)
+    canvas.drawCircle(71f, 59f, 5f, detail)
+
+    // Фільтр протигаза
+    canvas.drawCircle(64f, 69f, 4f, detail)
+    canvas.drawLine(64f, 73f, 64f, 78f, detail)
+
+    // Плечі та тулуб
+    val body = Path().apply {
+        moveTo(49f, 79f)
+        lineTo(37f, 89f)
+        lineTo(42f, 116f)
+        lineTo(86f, 116f)
+        lineTo(91f, 89f)
+        lineTo(79f, 79f)
+        close()
+    }
+
+    canvas.drawPath(body, fill)
+    canvas.drawPath(body, outline)
 
     // Руки
-    canvas.drawLine(43f, 62f, 29f, 72f, figure)
-    canvas.drawLine(43f, 62f, 59f, 69f, figure)
+    canvas.drawLine(43f, 88f, 57f, 101f, detail)
+    canvas.drawLine(85f, 88f, 74f, 96f, detail)
 
-    // Ноги
-    canvas.drawLine(43f, 79f, 32f, 94f, figure)
-    canvas.drawLine(43f, 79f, 55f, 94f, figure)
+    // Зброя в руках
+    canvas.drawLine(67f, 95f, 91f, 82f, detail)
+    canvas.drawLine(91f, 82f, 105f, 82f, detail)
+    canvas.drawLine(78f, 91f, 83f, 103f, detail)
+    canvas.drawLine(99f, 82f, 99f, 77f, detail)
 
-    // Зброя
-    canvas.drawLine(54f, 67f, 72f, 58f, figure)
-    canvas.drawLine(72f, 58f, 79f, 58f, figure)
+    // Підсвічування нижньої частини
+    canvas.drawLine(49f, 121f, 79f, 121f, detail)
 
     return BitmapDrawable(context.resources, bitmap)
 }
+
 
 @Composable
 fun ZoneMapPage(
