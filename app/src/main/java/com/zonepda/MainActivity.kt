@@ -1,6 +1,13 @@
 
 package com.zonepda
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -67,6 +74,86 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PdaApp() {
     val context = LocalContext.current
+var hasLocationPermission by remember {
+    mutableStateOf(
+        context.checkSelfPermission(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+        context.checkSelfPermission(
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    )
+}
+
+var userLatitude by remember { mutableStateOf<Double?>(null) }
+var userLongitude by remember { mutableStateOf<Double?>(null) }
+
+val locationPermissionLauncher =
+    rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        hasLocationPermission =
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+LaunchedEffect(Unit) {
+    if (!hasLocationPermission) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+}
+
+DisposableEffect(hasLocationPermission) {
+    if (!hasLocationPermission) {
+        onDispose { }
+    } else {
+        val locationManager =
+            context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                userLatitude = location.latitude
+                userLongitude = location.longitude
+            }
+        }
+
+        try {
+            val providers = listOf(
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER
+            )
+
+            providers.forEach { provider ->
+                try {
+                    if (locationManager.isProviderEnabled(provider)) {
+                        locationManager.getLastKnownLocation(provider)?.let {
+                            userLatitude = it.latitude
+                            userLongitude = it.longitude
+                        }
+
+                        locationManager.requestLocationUpdates(
+                            provider,
+                            2000L,
+                            3f,
+                            listener
+                        )
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        } catch (_: SecurityException) {
+        }
+
+        onDispose {
+            locationManager.removeUpdates(listener)
+        }
+    }
+}
 
     val prefs = remember {
         context.getSharedPreferences(
@@ -324,7 +411,7 @@ fun PdaApp() {
                     )
 
                     Text(
-                        "GPS: STBY",
+                        "GPS: ${if (userLatitude != null) "ACTIVE" else "SEARCH"}",
                         color = muted,
                         fontSize = 9.sp
                     )
@@ -358,7 +445,11 @@ fun PdaApp() {
                         battery
                     )
 
-                    "КАРТА" -> ZoneMapPage()
+                    "КАРТА" -> ZoneMapPage(
+latitude = userLatitude,
+    longitude = userLongitude,
+    gpsActive = userLatitude != null && userLongitude != null
+)
 
                     "СКАНЕР" -> RadarPage()
 
