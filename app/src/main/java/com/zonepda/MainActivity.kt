@@ -63,12 +63,18 @@ fun PdaApp() {
     var notes by remember {
         mutableStateOf(
             try {
-                val array = JSONArray(prefs.getString("notes", "[]"))
-                List(array.length()) { index ->
-                    array.getString(index)
-                }
-            } catch (_: Exception) {
-                emptyList()
+                var notes by remember {
+    mutableStateOf<List<String>>(
+        try {
+            val array = JSONArray(prefs.getString("notes", "[]"))
+            List(array.length()) { index ->
+                array.getString(index)
+            }
+        } catch (_: Exception) {
+            emptyList<String>()
+        }
+    )
+}
             }
         )
     }
