@@ -1,6 +1,11 @@
 
 package com.zonepda
 
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import kotlin.math.roundToInt
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
@@ -71,6 +76,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun compassDirection(degrees: Float): String {
+    val directions = listOf(
+        "Пн", "ПнСх", "Сх", "ПдСх",
+        "Пд", "ПдЗх", "Зх", "ПнЗх"
+    )
+
+    val index = ((degrees + 22.5f) / 45f)
+        .toInt() % 8
+
+    return directions[index]
+}
 @Composable
 fun PdaApp() {
     val context = LocalContext.current
@@ -87,6 +103,9 @@ var hasLocationPermission by remember {
 
 var userLatitude by remember { mutableStateOf<Double?>(null) }
 var userLongitude by remember { mutableStateOf<Double?>(null) }
+var speedKmh by remember { mutableStateOf<Float?>(null) }
+var altitude by remember { mutableStateOf<Double?>(null) }
+var headingDegrees by remember { mutableStateOf<Float?>(null) }
 
 val locationPermissionLauncher =
     rememberLauncherForActivityResult(
@@ -119,6 +138,17 @@ DisposableEffect(hasLocationPermission) {
             override fun onLocationChanged(location: Location) {
                 userLatitude = location.latitude
                 userLongitude = location.longitude
+speedKmh = if (location.hasSpeed()) {
+    location.speed * 3.6f
+} else {
+    null
+}
+
+altitude = if (location.hasAltitude()) {
+    location.altitude
+} else {
+    null
+}
             }
         }
 
@@ -152,6 +182,84 @@ DisposableEffect(hasLocationPermission) {
         onDispose {
             locationManager.removeUpdates(listener)
         }
+    }
+}
+// ЕЛЕКТРОННИЙ КОМПАС
+DisposableEffect(context) {
+    val sensorManager =
+        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    val accelerometer =
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+    val magnetometer =
+        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+    var gravity: FloatArray? = null
+    var magnetic: FloatArray? = null
+
+    val listener = object : SensorEventListener {
+
+        override fun onSensorChanged(event: SensorEvent) {
+            when (event.sensor.type) {
+                Sensor.TYPE_ACCELEROMETER ->
+                    gravity = event.values.clone()
+
+                Sensor.TYPE_MAGNETIC_FIELD ->
+                    magnetic = event.values.clone()
+            }
+
+            val g = gravity ?: return
+            val m = magnetic ?: return
+
+            val rotationMatrix = FloatArray(9)
+            val orientation = FloatArray(3)
+
+            if (
+                SensorManager.getRotationMatrix(
+                    rotationMatrix,
+                    null,
+                    g,
+                    m
+                )
+            ) {
+                SensorManager.getOrientation(
+                    rotationMatrix,
+                    orientation
+                )
+
+                var degrees = Math.toDegrees(
+                    orientation[0].toDouble()
+                ).toFloat()
+
+                degrees = (degrees + 360f) % 360f
+
+                headingDegrees = degrees
+            }
+        }
+
+        override fun onAccuracyChanged(
+            sensor: Sensor?,
+            accuracy: Int
+        ) {}
+    }
+
+    if (accelerometer != null && magnetometer != null) {
+        sensorManager.registerListener(
+            listener,
+            accelerometer,
+            SensorManager.SENSOR_DELAY_UI
+        )
+
+        sensorManager.registerListener(
+            listener,
+            magnetometer,
+            SensorManager.SENSOR_DELAY_UI
+        )
+    }
+
+    onDispose {
+        sensorManager.unregisterListener(listener)
     }
 }
 
@@ -428,6 +536,71 @@ DisposableEffect(hasLocationPermission) {
                         fontSize = 9.sp
                     )
                 }
+Spacer(Modifier.height(4.dp))
+
+Column(
+    Modifier
+        .fillMaxWidth()
+        .background(panel)
+        .border(1.dp, line, RoundedCornerShape(2.dp))
+        .padding(7.dp)
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text("КОМПАС", color = muted, fontSize = 8.sp)
+            Text(
+                if (headingDegrees != null)
+                    "${compassDirection(headingDegrees!!)} ${headingDegrees!!.roundToInt()}°"
+                else "--",
+                color = green,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Column {
+            Text("ШВИДКІСТЬ", color = muted, fontSize = 8.sp)
+            Text(
+                speedKmh?.let { "%.1f км/год".format(Locale.US, it) } ?: "--",
+                color = green,
+                fontSize = 13.sp
+            )
+        }
+
+        Column {
+            Text("ВИСОТА", color = muted, fontSize = 8.sp)
+            Text(
+                altitude?.let { "${it.roundToInt()} м" } ?: "--",
+                color = green,
+                fontSize = 13.sp
+            )
+        }
+    }
+
+    Spacer(Modifier.height(5.dp))
+
+    HorizontalDivider(color = line)
+
+    Spacer(Modifier.height(5.dp))
+
+    Text(
+        if (userLatitude != null && userLongitude != null) {
+            "LAT: %.5f    LON: %.5f".format(
+                Locale.US,
+                userLatitude!!,
+                userLongitude!!
+            )
+        } else {
+            "LAT: --    LON: --"
+        },
+        color = green,
+        fontSize = 11.sp,
+        fontFamily = FontFamily.Monospace
+    )
+}
             }
 
             // ОСНОВНИЙ ВМІСТ
