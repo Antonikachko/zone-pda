@@ -141,7 +141,7 @@ DisposableEffect(hasLocationPermission) {
 speedKmh = if (location.hasSpeed()) {
     location.speed * 3.6f
 } else {
-    null
+    of
 }
 
 altitude = if (location.hasAltitude()) {
@@ -228,13 +228,23 @@ DisposableEffect(context) {
                     orientation
                 )
 
-                var degrees = Math.toDegrees(
-                    orientation[0].toDouble()
-                ).toFloat()
+                val degrees = (
+    Math.toDegrees(
+        orientation[0].toDouble()
+    ).toFloat() + 360f
+) % 360f
 
-                degrees = (degrees + 360f) % 360f
+val previous = headingDegrees ?: degrees
 
-                headingDegrees = degrees
+// Найкоротша різниця між двома напрямками
+val difference = (
+    (degrees - previous + 540f) % 360f
+) - 180f
+
+// Плавне згладжування
+headingDegrees = (
+    previous + difference * 0.12f + 360f
+) % 360f
             }
         }
 
