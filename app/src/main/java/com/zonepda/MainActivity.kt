@@ -141,7 +141,7 @@ DisposableEffect(hasLocationPermission) {
 speedKmh = if (location.hasSpeed()) {
     location.speed * 3.6f
 } else {
-    off
+    of
 }
 
 altitude = if (location.hasAltitude()) {
