@@ -44,17 +44,37 @@ private val satelliteSource = object : OnlineTileSourceBase(
 }
 
 
+
 private fun createStalkerIcon(
     context: android.content.Context
 ): BitmapDrawable {
     val bitmap = Bitmap.createBitmap(
-        128, 150, Bitmap.Config.ARGB_8888
+        144, 160, Bitmap.Config.ARGB_8888
     )
     val canvas = Canvas(bitmap)
 
     val green = AndroidColor.rgb(155, 255, 163)
     val dark = AndroidColor.rgb(8, 20, 11)
-    val shade = AndroidColor.rgb(38, 75, 43)
+
+    // М'яке зелене світіння
+    for (i in 0..3) {
+        val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = AndroidColor.argb(
+                22 - i * 4, 100, 255, 120
+            )
+            style = Paint.Style.STROKE
+            strokeWidth = 12f - i * 2f
+        }
+        canvas.drawCircle(72f, 91f, 58f + i * 3f, glow)
+    }
+
+    // Кільце сканування
+    val scan = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = AndroidColor.argb(130, 155, 255, 163)
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f
+    }
+    canvas.drawCircle(72f, 91f, 62f, scan)
 
     val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = dark
@@ -76,73 +96,63 @@ private fun createStalkerIcon(
         strokeCap = Paint.Cap.ROUND
     }
 
-    // Зовнішня форма краплі
+    // Крапля
     val drop = Path().apply {
-        moveTo(64f, 5f)
-        cubicTo(47f, 29f, 12f, 66f, 12f, 94f)
-        cubicTo(12f, 122f, 34f, 143f, 64f, 143f)
-        cubicTo(94f, 143f, 116f, 122f, 116f, 94f)
-        cubicTo(116f, 66f, 81f, 29f, 64f, 5f)
+        moveTo(72f, 5f)
+        cubicTo(55f, 29f, 20f, 66f, 20f, 94f)
+        cubicTo(20f, 122f, 42f, 143f, 72f, 143f)
+        cubicTo(102f, 143f, 124f, 122f, 124f, 94f)
+        cubicTo(124f, 66f, 89f, 29f, 72f, 5f)
         close()
     }
 
     canvas.drawPath(drop, fill)
     canvas.drawPath(drop, outline)
-
-    // Внутрішній контур
-    canvas.drawCircle(64f, 88f, 43f, outline)
+    canvas.drawCircle(72f, 88f, 43f, outline)
 
     // Рюкзак
     canvas.drawRoundRect(
-        32f, 76f, 48f, 111f,
-        5f, 5f, fill
+        40f, 76f, 56f, 111f, 5f, 5f, fill
     )
     canvas.drawRoundRect(
-        32f, 76f, 48f, 111f,
-        5f, 5f, outline
+        40f, 76f, 56f, 111f, 5f, 5f, outline
     )
-    canvas.drawLine(36f, 84f, 44f, 84f, detail)
-    canvas.drawLine(36f, 98f, 44f, 98f, detail)
+    canvas.drawLine(44f, 84f, 52f, 84f, detail)
+    canvas.drawLine(44f, 98f, 52f, 98f, detail)
 
     // Капюшон
     val hood = Path().apply {
-        moveTo(43f, 64f)
-        cubicTo(43f, 38f, 51f, 27f, 64f, 27f)
-        cubicTo(79f, 27f, 87f, 40f, 85f, 64f)
-        lineTo(78f, 78f)
-        lineTo(49f, 78f)
+        moveTo(51f, 64f)
+        cubicTo(51f, 38f, 59f, 27f, 72f, 27f)
+        cubicTo(87f, 27f, 95f, 40f, 93f, 64f)
+        lineTo(86f, 78f)
+        lineTo(57f, 78f)
         close()
     }
 
     canvas.drawPath(hood, fill)
     canvas.drawPath(hood, outline)
 
-    // Маска протигаза
+    // Протигаз
     canvas.drawRoundRect(
-        49f, 49f, 79f, 76f,
-        8f, 8f, fill
+        57f, 49f, 87f, 76f, 8f, 8f, fill
     )
     canvas.drawRoundRect(
-        49f, 49f, 79f, 76f,
-        8f, 8f, outline
+        57f, 49f, 87f, 76f, 8f, 8f, outline
     )
 
-    // Окуляри
-    canvas.drawCircle(57f, 59f, 5f, detail)
-    canvas.drawCircle(71f, 59f, 5f, detail)
+    canvas.drawCircle(65f, 59f, 5f, detail)
+    canvas.drawCircle(79f, 59f, 5f, detail)
+    canvas.drawCircle(72f, 69f, 4f, detail)
 
-    // Фільтр протигаза
-    canvas.drawCircle(64f, 69f, 4f, detail)
-    canvas.drawLine(64f, 73f, 64f, 78f, detail)
-
-    // Плечі та тулуб
+    // Тулуб
     val body = Path().apply {
-        moveTo(49f, 79f)
-        lineTo(37f, 89f)
-        lineTo(42f, 116f)
-        lineTo(86f, 116f)
-        lineTo(91f, 89f)
-        lineTo(79f, 79f)
+        moveTo(57f, 79f)
+        lineTo(45f, 89f)
+        lineTo(50f, 116f)
+        lineTo(94f, 116f)
+        lineTo(99f, 89f)
+        lineTo(87f, 79f)
         close()
     }
 
@@ -150,20 +160,28 @@ private fun createStalkerIcon(
     canvas.drawPath(body, outline)
 
     // Руки
-    canvas.drawLine(43f, 88f, 57f, 101f, detail)
-    canvas.drawLine(85f, 88f, 74f, 96f, detail)
+    canvas.drawLine(51f, 88f, 65f, 101f, detail)
+    canvas.drawLine(93f, 88f, 82f, 96f, detail)
 
-    // Зброя в руках
-    canvas.drawLine(67f, 95f, 91f, 82f, detail)
-    canvas.drawLine(91f, 82f, 105f, 82f, detail)
-    canvas.drawLine(78f, 91f, 83f, 103f, detail)
-    canvas.drawLine(99f, 82f, 99f, 77f, detail)
+    // Зброя
+    canvas.drawLine(75f, 95f, 99f, 82f, detail)
+    canvas.drawLine(99f, 82f, 113f, 82f, detail)
+    canvas.drawLine(86f, 91f, 91f, 103f, detail)
+    canvas.drawLine(107f, 82f, 107f, 77f, detail)
 
-    // Підсвічування нижньої частини
-    canvas.drawLine(49f, 121f, 79f, 121f, detail)
+    // Нижній індикатор
+    canvas.drawLine(57f, 121f, 87f, 121f, detail)
+
+    // Центральна точка GPS
+    val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = green
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(72f, 132f, 2.5f, dot)
 
     return BitmapDrawable(context.resources, bitmap)
 }
+
 
 
 @Composable
