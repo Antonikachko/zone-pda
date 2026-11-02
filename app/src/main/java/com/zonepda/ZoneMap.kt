@@ -26,6 +26,11 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import androidx.compose.foundation.Canvas as ComposeCanvas
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.text.font.FontWeight
 
 private val satelliteSource = object : OnlineTileSourceBase(
     "Esri World Imagery",
@@ -189,6 +194,7 @@ fun ZoneMapPage(
     latitude: Double?,
     longitude: Double?,
     gpsActive: Boolean
+    headingDegrees: Float?
 ) {
     var satellite by remember { mutableStateOf(true) }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -296,6 +302,137 @@ fun ZoneMapPage(
                 factory = { mapView },
                 modifier = Modifier.fillMaxSize().clipToBounds()
             )
+// КОМПАС ПОВЕРХ КАРТИ
+Box(
+    modifier = Modifier
+        .align(Alignment.TopStart)
+        .padding(8.dp)
+        .size(100.dp)
+        .background(
+            Color(0xEE08120B),
+            RoundedCornerShape(50)
+        )
+        .border(
+            1.dp,
+            Color(0xFF65B875),
+            RoundedCornerShape(50)
+        ),
+    contentAlignment = Alignment.Center
+) {
+    ComposeCanvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val cx = size.width / 2
+        val cy = size.height / 2
+        val radius = size.width * 0.39f
+
+        // Зовнішнє кільце
+        drawCircle(
+            color = Color(0xFF65B875),
+            radius = radius + 5f,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(1.5f)
+        )
+
+        // Поділки компаса
+        for (i in 0 until 36) {
+            val angle = Math.toRadians(i * 10.0)
+            val outer = radius
+            val inner = if (i % 9 == 0) radius - 12f
+                        else if (i % 3 == 0) radius - 8f
+                        else radius - 4f
+
+            val x1 = cx + kotlin.math.sin(angle).toFloat() * inner
+            val y1 = cy - kotlin.math.cos(angle).toFloat() * inner
+            val x2 = cx + kotlin.math.sin(angle).toFloat() * outer
+            val y2 = cy - kotlin.math.cos(angle).toFloat() * outer
+
+            drawLine(
+                color = Color(0xFF9BFFA3),
+                start = androidx.compose.ui.geometry.Offset(x1, y1),
+                end = androidx.compose.ui.geometry.Offset(x2, y2),
+                strokeWidth = if (i % 9 == 0) 2.5f else 1f
+            )
+        }
+
+        // Стрілка напрямку телефона
+        rotate(
+            degrees = headingDegrees ?: 0f,
+            pivot = androidx.compose.ui.geometry.Offset(cx, cy)
+        ) {
+            val tip = androidx.compose.ui.geometry.Offset(cx, cy - radius + 10f)
+            val base = androidx.compose.ui.geometry.Offset(cx, cy + 9f)
+
+            drawLine(
+                color = Color(0xFF9BFFA3),
+                start = base,
+                end = tip,
+                strokeWidth = 3f,
+                cap = StrokeCap.Round
+            )
+
+            drawLine(
+                color = Color(0xFF9BFFA3),
+                start = tip,
+                end = androidx.compose.ui.geometry.Offset(cx - 5f, cy - radius + 21f),
+                strokeWidth = 2f
+            )
+
+            drawLine(
+                color = Color(0xFF9BFFA3),
+                start = tip,
+                end = androidx.compose.ui.geometry.Offset(cx + 5f, cy - radius + 21f),
+                strokeWidth = 2f
+            )
+        }
+
+        drawCircle(
+            color = Color(0xFF9BFFA3),
+            radius = 3f,
+            center = androidx.compose.ui.geometry.Offset(cx, cy)
+        )
+    }
+
+    // Сторони світу
+    Text(
+        "Пн",
+        color = Color(0xFF9BFFA3),
+        fontSize = 9.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.align(Alignment.TopCenter).padding(top = 5.dp)
+    )
+
+    Text(
+        "Пд",
+        color = Color(0xFF9BFFA3),
+        fontSize = 9.sp,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 5.dp)
+    )
+
+    Text(
+        "Зх",
+        color = Color(0xFF9BFFA3),
+        fontSize = 8.sp,
+        modifier = Modifier.align(Alignment.CenterStart).padding(start = 5.dp)
+    )
+
+    Text(
+        "Сх",
+        color = Color(0xFF9BFFA3),
+        fontSize = 8.sp,
+        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 5.dp)
+    )
+
+    Text(
+        headingDegrees?.let {
+            "${it.toInt()}°"
+        } ?: "---",
+        color = Color(0xFFD6B66C),
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.align(Alignment.Center)
+            .padding(top = 23.dp)
+    )
+}
 
             Button(
                 onClick = {
