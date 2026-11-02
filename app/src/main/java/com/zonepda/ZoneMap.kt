@@ -193,7 +193,7 @@ private fun createStalkerIcon(
 fun ZoneMapPage(
     latitude: Double?,
     longitude: Double?,
-    gpsActive: Boolean
+    gpsActive: Boolean,
     headingDegrees: Float?
 ) {
     var satellite by remember { mutableStateOf(true) }
