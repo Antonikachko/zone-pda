@@ -631,7 +631,8 @@ Column(
                     "КАРТА" -> ZoneMapPage(
 latitude = userLatitude,
     longitude = userLongitude,
-    gpsActive = userLatitude != null && userLongitude != null
+    gpsActive = userLatitude != null && userLongitude != null,
+headingDegrees = headingDegrees
 )
 
                     "СКАНЕР" -> RadarPage()
